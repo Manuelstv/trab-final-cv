@@ -1,0 +1,26 @@
+<annotation verified="yes">
+    <folder>Annotation</folder>
+    <filename>dog.9076.jpg</filename>
+    <path>dog_new-PascalVOC-export/Annotations/dog.9076.jpg</path>
+    <source>
+        <database>Unknown</database>
+    </source>
+    <size>
+        <width>256</width>
+        <height>256</height>
+        <depth>3</depth>
+    </size>
+    <segmented>0</segmented>
+    <object>
+    <name>dog</name>
+    <pose>Unspecified</pose>
+    <truncated>0</truncated>
+    <difficult>0</difficult>
+    <bndbox>
+        <xmin>43.85988259180791</xmin>
+        <ymin>29.649717514124294</ymin>
+        <xmax>135.954802259887</xmax>
+        <ymax>86.85198181497175</ymax>
+    </bndbox>
+</object>
+</annotation>

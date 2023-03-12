@@ -1,0 +1,26 @@
+<annotation verified="yes">
+    <folder>Annotation</folder>
+    <filename>cat.810.jpg</filename>
+    <path>cat_new-PascalVOC-export/Annotations/cat.810.jpg</path>
+    <source>
+        <database>Unknown</database>
+    </source>
+    <size>
+        <width>256</width>
+        <height>256</height>
+        <depth>3</depth>
+    </size>
+    <segmented>0</segmented>
+    <object>
+    <name>cat</name>
+    <pose>Unspecified</pose>
+    <truncated>0</truncated>
+    <difficult>0</difficult>
+    <bndbox>
+        <xmin>6.183053054378531</xmin>
+        <ymin>52.93559653072034</ymin>
+        <xmax>206.93332891949152</xmax>
+        <ymax>223.31300759180792</ymax>
+    </bndbox>
+</object>
+</annotation>
