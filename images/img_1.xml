@@ -1,7 +1,7 @@
 <annotation verified="yes">
     <folder>Annotation</folder>
-    <filename>dog.3425.jpg</filename>
-    <path>Dog-PascalVOC-export/Annotations/dog.3425.jpg</path>
+    <filename>dog.8871.jpg</filename>
+    <path>dog_new-PascalVOC-export/Annotations/dog.8871.jpg</path>
     <source>
         <database>Unknown</database>
     </source>
@@ -17,10 +17,10 @@
     <truncated>0</truncated>
     <difficult>0</difficult>
     <bndbox>
-        <xmin>8.497175141242938</xmin>
-        <ymin>26.32316494526836</ymin>
-        <xmax>250.61242055084745</xmax>
-        <ymax>247.90057821327684</ymax>
+        <xmin>53.333333333333336</xmin>
+        <ymin>4.0497191693149714</ymin>
+        <xmax>199.99097369350284</xmax>
+        <ymax>228.8090351341808</ymax>
     </bndbox>
 </object>
 </annotation>

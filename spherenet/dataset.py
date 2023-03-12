@@ -4,13 +4,16 @@ from scipy.ndimage.interpolation import map_coordinates
 from PIL import Image
 # Pytorch
 #import pandas as pd
+
+import glob
+
+from xml.etree import ElementTree as et
 import torch
 from torch.utils import data
 from torchvision import datasets
 
 # Misc
 from functools import lru_cache
-
 import cv2
 
 
@@ -73,7 +76,7 @@ def uv2img_idx(uv, h, w, u_fov, v_fov, v_c=0):
     return np.stack([y, x], axis=0)
 
 class OmniDataset(data.Dataset):
-    def __init__(self, dataset, fov=120, outshape=(256, 256),
+    def __init__(self, dataset, fov=120, outshape=(60, 60),
                  flip=False, h_rotate=False, v_rotate=False,
                  img_mean=None, img_std=None, fix_aug=False):
         '''
@@ -105,7 +108,7 @@ class OmniDataset(data.Dataset):
         return len(self.dataset)
 
     def __getitem__(self, idx):
-        img = np.array(self.dataset[idx], np.float32)
+        img = np.array(self.dataset[idx][0], np.float32)
         h, w = img.shape[:2]
         uv = genuv(*self.outshape)
         fov = self.fov * np.pi / 180
@@ -141,7 +144,7 @@ class OmniDataset(data.Dataset):
         if self.img_std is not None:
             x = x / self.img_std
 
-        return torch.FloatTensor(x.copy())
+        return torch.FloatTensor(x.copy()), self.dataset[idx][1]
 
 
 class OmniDataset2(data.Dataset):
@@ -238,9 +241,10 @@ class CustomDataset(data.Dataset):
         #self.idx = idx
         self.root_dir = root_dir
         self.transform = transform
+        self.classes = ['cat', 'dog']
 
-    #def __len__(self):
-    #    return len(self.landmarks_frame)
+    def __len__(self):
+        return len(glob.glob(f'{self.root_dir}/*.jpg'))
 
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
@@ -248,9 +252,9 @@ class CustomDataset(data.Dataset):
 
         #img_name = os.path.join(self.root_dir,
         #                        self.landmarks_frame.iloc[idx, 0])
-        img_name = f'//home/msnuel/SphereNet-pytorch/dataset/images/cat.{idx}.jpg'
+        img_name = f'{self.root_dir}/img_{idx}.jpg'
         #image = io.imread(img_name)
-        image  = Image.open(f'/home/msnuel/SphereNet-pytorch/dataset/images/cat.{idx}.jpg').convert('L')
+        image  = Image.open(img_name).convert('L')
 
         #landmarks = self.landmarks_frame.iloc[idx, 1:]
         #landmarks = np.array([landmarks])
@@ -260,13 +264,65 @@ class CustomDataset(data.Dataset):
 
         #if self.transform:
         #    sample = self.transform(sample)
+                # capture the corresponding XML file for getting the annotations
+        annot_filename = img_name[:-4] + '.xml'
+        #annot_file_path = os.path.join(self.dir_path, annot_filename)
+        
+        boxes = []
+        labels = []
+        tree = et.parse(annot_filename)
+        root = tree.getroot()
+        
+        # get the height and width of the image
+        image_width, image_height = image.size
+        
+        # box coordinates for xml files are extracted and corrected for image size given
+        for member in root.findall('object'):
+            # map the current object name to `classes` list to get...
+            # ... the label index and append to `labels` list
+            labels.append(self.classes.index(member.find('name').text))
+            
+            # xmin = left corner x-coordinates
+            xmin = int(float(member.find('bndbox').find('xmin').text))
+            # xmax = right corner x-coordinates
+            xmax = int(float(member.find('bndbox').find('xmax').text))
+            # ymin = left corner y-coordinates
+            ymin = int(float(member.find('bndbox').find('ymin').text))
+            # ymax = right corner y-coordinates
+            ymax = int(float(member.find('bndbox').find('ymax').text))
+            
+            # resize the bounding boxes according to the...
+            # ... desired `width`, `height`
+            xmin_final = xmin#/image_width)#*self.image_width
+            xmax_final = xmax#/image_width)#*self.image_width
+            ymin_final = ymin#/image_height)#*self.image_height
+            yamx_final = ymax#/image_height)#*self.image_height
+            
+            boxes.append([xmin_final, ymin_final, xmax_final, yamx_final])
+        
+        #print(labels)
+        # bounding box to tensor
+        boxes = torch.as_tensor(boxes, dtype=torch.float32)
+        # area of the bounding boxes
+        area = (boxes[:, 3] - boxes[:, 1]) * (boxes[:, 2] - boxes[:, 0])
+        # no crowd instances
+        iscrowd = torch.zeros((boxes.shape[0],), dtype=torch.int64)
+        # labels to tensor
+        labels = torch.as_tensor(labels, dtype=torch.float32)
 
-        return image
+        # prepare the final `target` dictionary
+        target = {}
+        target["boxes"] = boxes
+        target["labels"] = labels
+        target["area"] = area
+        target["iscrowd"] = iscrowd
+        image_id = torch.tensor([idx])
+        target["image_id"] = image_id
 
-
+        return image, target["labels"]
 
 class OmniCustom(OmniDataset):
-    def __init__(self, root='/home/msnuel/SphereNet-pytorch/dataset/images', train=True,
+    def __init__(self, root='/home/msnuel/SphereNet-pytorch/images', train=True,
                  download=True, *args, **kwargs):
         
         self.custom = CustomDataset(root_dir = root)
@@ -344,7 +400,7 @@ if __name__ == '__main__':
     for idx in args.idx:
         idx = int(idx)
         path = os.path.join(args.out_dir, '%d.png' % idx)
-        x = dataset[idx]
+        x, label = dataset[idx]
 
         print(path)
         Image.fromarray(x.numpy().astype(np.uint8)).save(path)

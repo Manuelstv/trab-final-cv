@@ -1,5 +1,5 @@
 import argparse
-from spherenet import OmniMNIST, OmniFashionMNIST
+from spherenet import OmniMNIST, OmniFashionMNIST, OmniCustom
 from spherenet import SphereConv2D, SphereMaxPool2D
 import torch
 from torch import nn
@@ -15,13 +15,14 @@ class SphereNet(nn.Module):
         self.conv2 = SphereConv2D(32, 64, stride=1)
         self.pool2 = SphereMaxPool2D(stride=2)
 
-        self.fc = nn.Linear(14400, 10)
+        self.fc = nn.Linear(14400, 2)
 
     def forward(self, x):
         x = F.relu(self.pool1(self.conv1(x)))
         x = F.relu(self.pool2(self.conv2(x)))
         x = x.view(-1, 14400)  # flatten, [B, C, H, W) -> (B, C*H*W)
-        x = self.fc(x)
+        #x = torch.nn.Softmax()(self.fc(x))
+        x = torch.argmax(self.fc(x), dim=1)
         return x
 
 
@@ -30,13 +31,13 @@ class Net(nn.Module):
         super(Net, self).__init__()
         self.conv1 = nn.Conv2d(1, 32, kernel_size=3)
         self.conv2 = nn.Conv2d(32, 64, kernel_size=3)
-        self.fc = nn.Linear(64*13*13, 10)
+        self.fc = nn.Linear(64*13*13, 2)
 
     def forward(self, x):
         x = F.relu(F.max_pool2d(self.conv1(x), 2))
         x = F.relu(F.max_pool2d(self.conv2(x), 2))
         x = x.view(-1, 64*13*13)  # flatten, [B, C, H, W) -> (B, C*H*W)
-        x = self.fc(x)
+        x = torch.nn.functional.log_softmax(self.fc(x), dim =0)
         return x
 
 
@@ -48,7 +49,11 @@ def train(args, model, device, train_loader, optimizer, epoch):
         if data.dim() == 3:
             data = data.unsqueeze(1)  # (B, H, W) -> (B, C, H, W)
         output = model(data)
+        print(target)
+        output = output.to(device).float()
+        #output = output.unsqueeze(1)
         loss = F.cross_entropy(output, target)
+        loss.requires_grad = True
         loss.backward()
         optimizer.step()
         if batch_idx % args.log_interval == 0:
@@ -80,9 +85,9 @@ def test(args, model, device, test_loader):
 def main():
     # Training settings
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--data', type=str, default='MNIST',
-                        help='dataset for training, options={"FashionMNIST", "MNIST"}')
-    parser.add_argument('--batch-size', type=int, default=128, metavar='N',
+    parser.add_argument('--data', type=str, default='OmniCustom',
+                        help='dataset for training, options={"FashionMNIST", "MNIST", "OmniCustom"}')
+    parser.add_argument('--batch-size', type=int, default=16, metavar='N',
                         help='input batch size for training')
     parser.add_argument('--test-batch-size', type=int, default=128, metavar='N',
                         help='input batch size for testing')
@@ -115,9 +120,14 @@ def main():
     if args.data == 'FashionMNIST':
         train_dataset = OmniFashionMNIST(fov=120, flip=True, h_rotate=True, v_rotate=True, img_std=255, train=True)
         test_dataset = OmniFashionMNIST(fov=120, flip=True, h_rotate=True, v_rotate=True, img_std=255, train=False, fix_aug=True)
+    if args.data == 'OmniCustom':
+        train_dataset = OmniCustom(fov=120, flip=True, h_rotate=True, v_rotate=True, img_std=255, train=True)
+        test_dataset = OmniCustom(fov=120, flip=True, h_rotate=True, v_rotate=True, img_std=255, train=False, fix_aug=True)
     elif args.data == 'MNIST':
         train_dataset = OmniMNIST(fov=120, flip=True, h_rotate=True, v_rotate=True, train=True)
         test_dataset = OmniMNIST(fov=120, flip=True, h_rotate=True, v_rotate=True, train=False, fix_aug=True)
+    
+    #print(train_dataset)
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, **kwargs)
     test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=args.test_batch_size, shuffle=False, **kwargs)
 
