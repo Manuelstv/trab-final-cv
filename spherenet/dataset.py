@@ -108,7 +108,7 @@ class OmniDataset(data.Dataset):
         return len(self.dataset)
 
     def __getitem__(self, idx):
-        img = np.array(self.dataset[idx][0], np.float32)
+        img = np.array(self.dataset[idx][0], np.float32)/255.
         h, w = img.shape[:2]
         uv = genuv(*self.outshape)
         fov = self.fov * np.pi / 180
@@ -190,7 +190,7 @@ class OmniDataset2(data.Dataset):
         h, w = img.shape[:2]
         uv = genuv(*self.outshape)
         fov = self.fov * np.pi / 180
-        print(img.shape)
+        #print(img.shape)
 
         if self.v_rotate:
             if self.aug is not None:
@@ -200,7 +200,7 @@ class OmniDataset2(data.Dataset):
             img_idx = uv2img_idx(uv, h, w, fov, fov, v_c)
         else:
             img_idx = uv2img_idx(uv, h, w, fov, fov, 0)
-            print(img_idx.shape)
+            #print(img_idx.shape)
         x = map_coordinates(img, img_idx, order=1)
 
         # Random flip

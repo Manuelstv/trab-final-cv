@@ -49,9 +49,11 @@ def train(args, model, device, train_loader, optimizer, epoch):
         if data.dim() == 3:
             data = data.unsqueeze(1)  # (B, H, W) -> (B, C, H, W)
         output = model(data)
-        print(target)
         output = output.to(device).float()
-        #output = output.unsqueeze(1)
+        target = target.to(device).float()
+        target = target.squeeze(1)
+        print(output)
+        print(target)
         loss = F.cross_entropy(output, target)
         loss.requires_grad = True
         loss.backward()
@@ -72,8 +74,11 @@ def test(args, model, device, test_loader):
             if data.dim() == 3:
                 data = data.unsqueeze(1)  # (B, H, W) -> (B, C, H, W)
             output = model(data)
+            output = output.to(device).float()
+            target = target.squeeze(1)
             test_loss += F.cross_entropy(output, target).item() # sum up batch loss
-            pred = output.max(1, keepdim=True)[1] # get the index of the max log-probability
+            #pred = output.max(1, keepdim=True)[1] # get the index of the max log-probability
+            pred =output
             correct += pred.eq(target.view_as(pred)).sum().item()
 
     test_loss /= len(test_loader.dataset)
@@ -150,11 +155,11 @@ def main():
             torch.save(sphere_model.state_dict(), 'sphere_model.pkl')
 
         # Conventional CNN
-        print('{} Conventional CNN {}'.format('='*10, '='*10))
-        train(args, model, device, train_loader, optimizer, epoch)
-        test(args, model, device, test_loader)
-        if epoch % args.save_interval == 0:
-            torch.save(model.state_dict(), 'model.pkl')
+        #print('{} Conventional CNN {}'.format('='*10, '='*10))
+        #train(args, model, device, train_loader, optimizer, epoch)
+        #test(args, model, device, test_loader)
+        #if epoch % args.save_interval == 0:
+        #    torch.save(model.state_dict(), 'model.pkl')
 
 
 if __name__ == '__main__':
