@@ -76,7 +76,7 @@ def uv2img_idx(uv, h, w, u_fov, v_fov, v_c=0):
     return np.stack([y, x], axis=0)
 
 class OmniDataset(data.Dataset):
-    def __init__(self, dataset, fov=120, outshape=(60, 60),
+    def __init__(self, dataset, fov=120, outshape=(256, 256),
                  flip=False, h_rotate=False, v_rotate=False,
                  img_mean=None, img_std=None, fix_aug=False):
         '''
@@ -108,7 +108,7 @@ class OmniDataset(data.Dataset):
         return len(self.dataset)
 
     def __getitem__(self, idx):
-        img = np.array(self.dataset[idx][0], np.float32)/255.
+        img = np.array(self.dataset[idx][0], np.float32)#/255.
         h, w = img.shape[:2]
         uv = genuv(*self.outshape)
         fov = self.fov * np.pi / 180
@@ -322,7 +322,7 @@ class CustomDataset(data.Dataset):
         return image, target["labels"]
 
 class OmniCustom(OmniDataset):
-    def __init__(self, root='/home/msnuel/SphereNet-pytorch/images', train=True,
+    def __init__(self, root='/home/msnuel/trab-final-cv/images', train=True,
                  download=True, *args, **kwargs):
         
         self.custom = CustomDataset(root_dir = root)
