@@ -21,7 +21,7 @@ class SphereNet(nn.Module):
         self.conv5 = SphereConv2D(128, 128, stride=1)
         self.pool5 = SphereMaxPool2D(stride=2)
         
-        self.fc = nn.Linear(8192, 2)
+        self.fc = nn.Linear(8192, 3)
 
     def forward(self, x):
         x = F.relu(self.pool1(self.conv1(x)))
@@ -56,7 +56,7 @@ def train(args, model, device, train_loader, optimizer, epoch):
         data, target = data.to(device), target.long().to(device)
         optimizer.zero_grad()
         if data.dim() == 3:
-            print('a')
+            #print('a')
             data = data.unsqueeze(1)  # (B, H, W) -> (B, C, H, W)
         
         #print(model(data))
@@ -65,8 +65,8 @@ def train(args, model, device, train_loader, optimizer, epoch):
         #output = output.to(device).float()
         output = output.float()
         output = output.squeeze(1)
-        print(output)
-        target =target.squeeze(1)
+        #print(output)
+        target = target.squeeze(1)
         #target = torch.transpose(target, 0, 1)
         loss = F.cross_entropy(output, target)
         #loss.requires_grad = True
@@ -106,15 +106,15 @@ def main():
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--data', type=str, default='OmniCustom',
                         help='dataset for training, options={"FashionMNIST", "MNIST", "OmniCustom"}')
-    parser.add_argument('--batch-size', type=int, default=4, metavar='N',
+    parser.add_argument('--batch-size', type=int, default=8, metavar='N',
                         help='input batch size for training')
     parser.add_argument('--test-batch-size', type=int, default=4, metavar='N',
                         help='input batch size for testing')
-    parser.add_argument('--epochs', type=int, default=4, metavar='N',
+    parser.add_argument('--epochs', type=int, default=40, metavar='N',
                         help='number of epochs to train')
     parser.add_argument('--optimizer', type=str, default='adam',
                         help='optimizer, options={"adam, sgd"}')
-    parser.add_argument('--lr', type=float, default=1e-4, metavar='LR',
+    parser.add_argument('--lr', type=float, default=1e-6, metavar='LR',
                         help='learning rate')
     parser.add_argument('--momentum', type=float, default=0.9, metavar='M',
                         help='SGD momentum')
@@ -140,8 +140,8 @@ def main():
         train_dataset = OmniFashionMNIST(fov=120, flip=True, h_rotate=True, v_rotate=True, img_std=255, train=True)
         test_dataset = OmniFashionMNIST(fov=120, flip=True, h_rotate=True, v_rotate=True, img_std=255, train=False, fix_aug=True)
     if args.data == 'OmniCustom':
-        train_dataset = OmniCustom(fov=120, flip=False, h_rotate=False, v_rotate=False, img_std=255, train=True)
-        test_dataset = OmniCustom(fov=120, flip=False, h_rotate=False, v_rotate=False, img_std=255, train=False)
+        train_dataset = OmniCustom(fov=120, flip=True, h_rotate=True, v_rotate=True, img_std=255, train=True)
+        test_dataset = OmniCustom(root='/home/msnuel/trab-final-cv/test', fov=120, flip=False, h_rotate=False, v_rotate=False, img_std=255, train=False, fix_aug=False)
     elif args.data == 'MNIST':
         train_dataset = OmniMNIST(fov=120, flip=True, h_rotate=True, v_rotate=True, train=True)
         test_dataset = OmniMNIST(fov=120, flip=True, h_rotate=True, v_rotate=True, train=False, fix_aug=True)

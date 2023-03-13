@@ -322,7 +322,7 @@ class CustomDataset(data.Dataset):
         return image, target["labels"]
 
 class OmniCustom(OmniDataset):
-    def __init__(self, root='/home/msnuel/trab-final-cv/images', train=True,
+    def __init__(self, root='/home/msnuel/trab-final-cv/train', train=True,
                  download=True, *args, **kwargs):
         
         self.custom = CustomDataset(root_dir = root)
